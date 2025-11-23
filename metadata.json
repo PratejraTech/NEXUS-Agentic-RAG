@@ -1,0 +1,5 @@
+{
+  "name": "Nexus Graph-RAG",
+  "description": "A hybrid Agentic Graph-RAG intelligence engine interface for conversing with documents, visualizing knowledge graphs, and managing multi-agent ingestion pipelines.",
+  "requestFramePermissions": []
+}
