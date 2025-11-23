@@ -3,12 +3,13 @@ import { Layout } from './components/Layout';
 import { ChatInterface } from './components/ChatInterface';
 import { GraphExplorer } from './components/GraphExplorer';
 import { IngestionPanel } from './components/IngestionPanel';
+import { DataSources } from './components/DataSources';
 
-// Simple view router state
 export enum View {
   CHAT = 'CHAT',
   GRAPH = 'GRAPH',
   INGESTION = 'INGESTION',
+  DATA_SOURCES = 'DATA_SOURCES',
 }
 
 const App: React.FC = () => {
@@ -22,6 +23,8 @@ const App: React.FC = () => {
         return <GraphExplorer />;
       case View.INGESTION:
         return <IngestionPanel />;
+      case View.DATA_SOURCES:
+        return <DataSources />;
       default:
         return <ChatInterface onViewGraph={() => setCurrentView(View.GRAPH)} />;
     }

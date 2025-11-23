@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { UploadCloud, Play, FileText, CheckCircle2, Circle, Cpu, Network, Trash2, Loader2 } from 'lucide-react';
+import { UploadCloud, Play, FileText, CheckCircle2, Circle, Cpu, Network, Trash2, Loader2, AlertTriangle, X } from 'lucide-react';
 import { PipelineStatus } from '../types';
 import { uploadFiles } from '../services/api';
 
@@ -20,16 +20,25 @@ export const IngestionPanel: React.FC = () => {
 
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading' | 'uploaded'>('idle');
+  const [error, setError] = useState<string | null>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setError(null);
     if (e.target.files) {
-      const newFiles = Array.from(e.target.files);
+      const newFiles = Array.from(e.target.files) as File[];
+      // Basic validation
+      const invalidFiles = newFiles.filter(f => f.size > 50 * 1024 * 1024);
+      if (invalidFiles.length > 0) {
+          setError(`File too large: ${invalidFiles[0].name}. Max size is 50MB.`);
+          return;
+      }
       setSelectedFiles(prev => [...prev, ...newFiles]);
       setUploadStatus('idle'); // Reset if new files are added
     }
   };
 
   const removeFile = (index: number) => {
+    setError(null);
     setSelectedFiles(prev => prev.filter((_, i) => i !== index));
     if (selectedFiles.length <= 1) {
         setUploadStatus('idle');
@@ -38,6 +47,7 @@ export const IngestionPanel: React.FC = () => {
 
   const startIngestion = async () => {
     if (selectedFiles.length === 0) return;
+    setError(null);
     
     try {
         // 1. Upload Phase
@@ -50,9 +60,17 @@ export const IngestionPanel: React.FC = () => {
         // 2. Pipeline Phase
         setPipeline(prev => ({ ...prev, isActive: true, progress: 0, currentAgent: 'LoaderAgent' }));
         
-        // Mock simulation loop
+        // Mock simulation loop with random error possibility
         let stepIndex = 0;
         const interval = setInterval(() => {
+            // Simulate random failure for demo purposes
+            // if (Math.random() > 0.98) {
+            //    clearInterval(interval);
+            //    setError("Pipeline Error: GraphWriterAgent timed out waiting for Memgraph lock.");
+            //    setPipeline(prev => ({ ...prev, isActive: false }));
+            //    return;
+            // }
+
             setPipeline(prev => {
                 const newSteps = [...prev.steps];
                 
@@ -81,9 +99,11 @@ export const IngestionPanel: React.FC = () => {
             });
             stepIndex++;
         }, 1500);
-    } catch (error) {
-        console.error("Ingestion failed", error);
+    } catch (err: any) {
+        console.error("Ingestion failed", err);
+        setError(err.message || "Failed to start ingestion process.");
         setUploadStatus('idle');
+        setPipeline(prev => ({ ...prev, isActive: false }));
     }
   };
 
@@ -96,6 +116,20 @@ export const IngestionPanel: React.FC = () => {
           <h1 className="text-3xl font-bold text-white mb-2">Data Ingestion</h1>
           <p className="text-slate-400">Manage the LangGraph pipeline for processing document knowledge.</p>
         </div>
+
+        {/* Error Alert */}
+        {error && (
+            <div className="bg-red-950/30 border border-red-900/50 rounded-lg p-4 flex items-start gap-3 animate-in fade-in slide-in-from-top-2">
+                <AlertTriangle className="w-5 h-5 text-red-500 mt-0.5" />
+                <div className="flex-1">
+                    <h4 className="text-red-200 font-medium text-sm">Operation Failed</h4>
+                    <p className="text-red-400 text-sm mt-1">{error}</p>
+                </div>
+                <button onClick={() => setError(null)} className="text-red-400 hover:text-red-300">
+                    <X className="w-4 h-4" />
+                </button>
+            </div>
+        )}
 
         {/* Upload Card */}
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-8">

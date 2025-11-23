@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
-import { Search, ZoomIn, ZoomOut, RefreshCw, Filter } from 'lucide-react';
+import { Search, ZoomIn, ZoomOut, RefreshCw, Filter, AlertCircle } from 'lucide-react';
 import { getMockGraphData } from '../services/api';
 import { GraphData, GraphNode, GraphLink } from '../types';
 
@@ -10,13 +10,20 @@ export const GraphExplorer: React.FC = () => {
   const [data, setData] = useState<GraphData | null>(null);
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Load data
   useEffect(() => {
-    getMockGraphData().then(d => {
-      setData(d);
-      setLoading(false);
-    });
+    getMockGraphData()
+        .then(d => {
+            setData(d);
+            setLoading(false);
+        })
+        .catch(err => {
+            console.error(err);
+            setError("Failed to load graph topology. Please try again later.");
+            setLoading(false);
+        });
   }, []);
 
   // D3 Rendering
@@ -155,6 +162,20 @@ export const GraphExplorer: React.FC = () => {
                 <span className="text-accent-500 animate-pulse font-mono">Loading Graph Topology...</span>
             </div>
         )}
+        
+        {error && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center z-10 bg-slate-950/90">
+                <AlertCircle className="w-10 h-10 text-red-500 mb-4" />
+                <span className="text-red-200 font-medium mb-2">{error}</span>
+                <button 
+                  onClick={() => { setLoading(true); setError(null); getMockGraphData().then(d => { setData(d); setLoading(false); }).catch(e => { setError("Failed again."); setLoading(false); }); }}
+                  className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded transition-colors text-sm"
+                >
+                    Retry Connection
+                </button>
+            </div>
+        )}
+
         <svg ref={svgRef} className="w-full h-full block" />
         
         {/* Graph Controls Overlay */}
@@ -167,7 +188,7 @@ export const GraphExplorer: React.FC = () => {
             </button>
             <button className="p-2 bg-slate-800 text-slate-300 rounded-lg border border-slate-700 hover:bg-slate-700 hover:text-white transition-colors" title="Reset Layout" onClick={() => {
                 // Ideally this would re-run simulation.alpha(1).restart() via a ref or context
-                setData({...data!} as GraphData); // Cheat force re-render
+                if(data) setData({...data} as GraphData); // Cheat force re-render
             }}>
                 <RefreshCw className="w-5 h-5" />
             </button>

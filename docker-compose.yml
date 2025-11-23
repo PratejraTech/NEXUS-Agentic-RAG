@@ -10,15 +10,14 @@ services:
       - "5173:5173"
     environment:
       - VITE_API_URL=http://localhost:8000/api
-      - WATCHPACK_POLLING=true # Helps with hot reload on some systems
+      - WATCHPACK_POLLING=true
     volumes:
       - ./:/app
       - /app/node_modules
     networks:
       - nexus-network
     depends_on:
-      api:
-        condition: service_started
+      - api
 
   # --- Backend (FastAPI + LangGraph) ---
   api:
@@ -34,17 +33,14 @@ services:
       - CHROMA_HOST=chromadb
       - CHROMA_PORT=8000
     volumes:
-      - ./backend/app:/app/app # Hot reload mapping
-      - ./pdfs:/app/pdfs       # Ingestion directory
+      - ./backend/app:/app/app
+      - ./pdfs:/app/pdfs
     networks:
       - nexus-network
     depends_on:
-      postgres:
-        condition: service_healthy
-      memgraph:
-        condition: service_healthy
-      chromadb:
-        condition: service_healthy
+      - postgres
+      - memgraph
+      - chromadb
 
   # --- Vector Database ---
   chromadb:
@@ -55,19 +51,14 @@ services:
       - chroma_data:/chroma/chroma
     networks:
       - nexus-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
   # --- Graph Database ---
   memgraph:
     image: memgraph/memgraph-platform:latest
     ports:
-      - "7687:7687" # Bolt
-      - "3000:3000" # Memgraph Lab
-      - "7444:7444" # Logs
+      - "7687:7687"
+      - "3000:3000"
+      - "7444:7444"
     environment:
       - MEMGRAPH_USER=admin
       - MEMGRAPH_PASSWORD=nexus_graph_secret
@@ -75,11 +66,6 @@ services:
       - memgraph_data:/var/lib/memgraph
     networks:
       - nexus-network
-    healthcheck:
-      test: ["CMD-SHELL", "echo 'RETURN 1;' | mgconsole"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
   # --- Metadata Store ---
   postgres:
@@ -94,11 +80,6 @@ services:
       - db_data:/var/lib/postgresql/data
     networks:
       - nexus-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U user -d nexus"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
 
 volumes:
   db_data:

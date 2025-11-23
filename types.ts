@@ -1,3 +1,4 @@
+
 export interface Message {
   id: string;
   role: 'user' | 'assistant' | 'system';
@@ -46,4 +47,13 @@ export interface PipelineStatus {
   progress: number;
   currentAgent: string;
   steps: IngestionStep[];
+}
+
+export interface Document {
+  id: string;
+  filename: string;
+  upload_date: string;
+  status: string;
+  summary?: string;
+  metadata?: any;
 }

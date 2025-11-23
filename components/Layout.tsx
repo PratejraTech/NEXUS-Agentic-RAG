@@ -1,6 +1,6 @@
 import React from 'react';
 import { View } from '../App';
-import { MessageSquare, Share2, Database, Layers, Github } from 'lucide-react';
+import { MessageSquare, Share2, Database, Layers, FileText } from 'lucide-react';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -12,6 +12,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onViewCha
   const navItems = [
     { id: View.CHAT, label: 'Chat Retrieval', icon: MessageSquare },
     { id: View.GRAPH, label: 'Graph Explorer', icon: Share2 },
+    { id: View.DATA_SOURCES, label: 'Data Sources', icon: FileText },
     { id: View.INGESTION, label: 'Data Ingestion', icon: Database },
   ];
 
@@ -69,7 +70,6 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onViewCha
             <Layers className="h-6 w-6" />
             <span className="font-bold text-white">NEXUS</span>
           </div>
-          {/* Mobile menu toggle would go here */}
         </header>
         
         <div className="flex-1 overflow-hidden relative">

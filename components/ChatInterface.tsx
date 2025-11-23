@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User, FileText, Activity, Share2, Sparkles, AlertCircle } from 'lucide-react';
+import { Send, Bot, User, FileText, Activity, Share2, Sparkles, AlertCircle, XCircle } from 'lucide-react';
 import { Message } from '../types';
 import { mockChatResponseStream, getMockResponseMetadata } from '../services/api';
 
@@ -20,6 +20,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ onViewGraph }) => 
   const [isProcessing, setIsProcessing] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
   const [currentStep, setCurrentStep] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -28,7 +29,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ onViewGraph }) => 
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages, currentStep]);
+  }, [messages, currentStep, error]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,6 +45,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ onViewGraph }) => 
     setMessages(prev => [...prev, userMsg]);
     setInput('');
     setIsProcessing(true);
+    setError(null);
 
     try {
       // Simulate RAG steps for UI feedback
@@ -56,6 +58,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ onViewGraph }) => 
 
       for (const step of steps) {
         setCurrentStep(step);
+        // Simulate a small chance of error during steps for demonstration
+        // if (Math.random() > 0.95) throw new Error("Connection lost to Vector DB");
         await new Promise(r => setTimeout(r, 600)); // Simulate latency
       }
 
@@ -90,9 +94,17 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ onViewGraph }) => 
         : msg
       ));
 
-    } catch (error) {
-      console.error(error);
-      // Error handling
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || "An unexpected error occurred while processing your request.");
+      // Remove the partial assistant message if it exists and is empty/incomplete
+      setMessages(prev => {
+          const last = prev[prev.length - 1];
+          if (last.role === 'assistant' && !last.content) {
+              return prev.slice(0, -1);
+          }
+          return prev;
+      });
     } finally {
       setIsProcessing(false);
       setIsStreaming(false);
@@ -174,7 +186,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ onViewGraph }) => 
           </div>
         ))}
 
-        {/* Loading Indicator - Only show when processing steps, hide when streaming */}
+        {/* Loading Indicator */}
         {isProcessing && !isStreaming && (
           <div className="flex gap-4 max-w-4xl mx-auto">
             <div className="w-8 h-8 rounded-lg bg-accent-600/20 border border-accent-600/30 flex items-center justify-center shrink-0 animate-pulse">
@@ -188,6 +200,22 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ onViewGraph }) => 
             </div>
           </div>
         )}
+
+        {/* Error Message */}
+        {error && (
+            <div className="flex gap-4 max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-2">
+                <div className="w-8 h-8 rounded-lg bg-red-500/10 border border-red-500/20 flex items-center justify-center shrink-0">
+                    <AlertCircle className="w-5 h-5 text-red-500" />
+                </div>
+                <div className="bg-red-950/30 border border-red-900/50 text-red-200 p-4 rounded-xl rounded-bl-none flex items-center justify-between gap-4">
+                    <span className="text-sm">{error}</span>
+                    <button onClick={() => setError(null)} className="text-red-400 hover:text-red-300">
+                        <XCircle className="w-4 h-4" />
+                    </button>
+                </div>
+            </div>
+        )}
+
         <div ref={messagesEndRef} />
       </div>
 
@@ -200,7 +228,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ onViewGraph }) => 
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Ask a question about your documents..."
-              className="w-full bg-slate-900 text-slate-200 border border-slate-800 rounded-xl pl-4 pr-12 py-4 focus:outline-none focus:border-accent-600/50 focus:ring-1 focus:ring-accent-600/50 placeholder-slate-600 transition-all font-sans"
+              className="w-full bg-slate-900 text-slate-200 border border-slate-800 rounded-xl pl-4 pr-12 py-4 focus:outline-none focus:border-accent-600/50 focus:ring-1 focus:ring-accent-600/50 placeholder-slate-600 transition-all font-sans disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={isProcessing}
             />
             <button
