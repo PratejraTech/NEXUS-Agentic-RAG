@@ -6,13 +6,11 @@ from app.schemas import ChatResponse
 
 class RAGService:
     def __init__(self):
-        # We try to connect to Chroma, but if it fails (e.g. running locally without docker),
-        # we should handle it gracefully or mock it.
         try:
             self.client = chromadb.HttpClient(host=settings.CHROMA_HOST, port=settings.CHROMA_PORT)
             self.collection = self.client.get_or_create_collection("nexus_documents")
         except Exception as e:
-            print(f"Warning: Could not connect to ChromaDB at {settings.CHROMA_HOST}:{settings.CHROMA_PORT}. Error: {e}")
+            print(f"Warning: Could not connect to ChromaDB. Error: {e}")
             self.client = None
             self.collection = None
 
