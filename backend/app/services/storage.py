@@ -2,6 +2,7 @@ import os
 from typing import List
 from app.core.config import settings
 
+# Placeholder for storage service
 class StorageService:
     def __init__(self):
         self.upload_dir = "uploads"
