@@ -13,7 +13,6 @@ class ChatResponse(BaseModel):
     response: str
     conversation_id: str
     sources: List[Any] = []
-    timestamp: str = ""
 
 class DocumentIngestRequest(BaseModel):
     filename: str
