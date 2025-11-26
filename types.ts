@@ -1,3 +1,11 @@
+
+export enum View {
+  CHAT = 'CHAT',
+  GRAPH = 'GRAPH',
+  INGESTION = 'INGESTION',
+  DATA_SOURCES = 'DATA_SOURCES',
+}
+
 export interface Message {
   id: string;
   role: 'user' | 'assistant' | 'system';
@@ -55,4 +63,13 @@ export interface Document {
   status: string;
   summary?: string;
   metadata?: any;
+}
+
+export interface IngestionConfig {
+  chunkSize: number;
+  chunkOverlap: number;
+  useOcr: boolean;
+  recursionLimit: number;
+  useN8n: boolean;
+  n8nWebhookUrl?: string;
 }

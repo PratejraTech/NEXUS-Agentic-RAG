@@ -1,4 +1,4 @@
-import { Message, GraphData, Citation, Document } from '../types';
+import { Message, GraphData, Citation, Document, IngestionConfig } from '../types';
 
 const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8000/api';
 
@@ -62,12 +62,48 @@ export const uploadFiles = async (files: File[]): Promise<void> => {
   });
   
   if (!res.ok) throw new Error("Upload failed");
-  
-  await fetch(`${API_URL}/ingest/trigger`, { method: 'POST' });
 };
 
-export const triggerIngestion = async (files: string[]): Promise<void> => {
-   await fetch(`${API_URL}/ingest/trigger`, { method: 'POST' });
+export const triggerIngestion = async (config: IngestionConfig): Promise<void> => {
+   if (config.useN8n && config.n8nWebhookUrl) {
+       // --- Trigger n8n Webhook ---
+       console.log("Triggering n8n workflow...", config);
+       try {
+           const res = await fetch(config.n8nWebhookUrl, {
+               method: 'POST',
+               headers: { 'Content-Type': 'application/json' },
+               body: JSON.stringify({
+                   action: "trigger_ingestion",
+                   config: {
+                       chunk_size: config.chunkSize,
+                       chunk_overlap: config.chunkOverlap,
+                       use_ocr: config.useOcr,
+                       recursion_limit: config.recursionLimit
+                   }
+               })
+           });
+           if (!res.ok) throw new Error("n8n Webhook failed");
+       } catch (e) {
+           console.error("n8n connection error", e);
+           throw new Error("Failed to connect to n8n Webhook. Is n8n running?");
+       }
+   } else {
+       // --- Trigger Local Backend ---
+       const res = await fetch(`${API_URL}/ingest/trigger`, { 
+           method: 'POST',
+           headers: { 'Content-Type': 'application/json' },
+           body: JSON.stringify({
+               config: {
+                   chunk_size: config.chunkSize,
+                   chunk_overlap: config.chunkOverlap,
+                   use_ocr: config.useOcr,
+                   recursion_limit: config.recursionLimit,
+                   use_n8n: false
+               }
+           })
+       });
+       if (!res.ok) throw new Error("Failed to trigger backend ingestion");
+   }
 };
 
 export const fetchDocuments = async (): Promise<Document[]> => {

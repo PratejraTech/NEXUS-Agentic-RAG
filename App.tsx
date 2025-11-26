@@ -4,13 +4,7 @@ import { ChatInterface } from './components/ChatInterface';
 import { GraphExplorer } from './components/GraphExplorer';
 import { IngestionPanel } from './components/IngestionPanel';
 import { DataSources } from './components/DataSources';
-
-export enum View {
-  CHAT = 'CHAT',
-  GRAPH = 'GRAPH',
-  INGESTION = 'INGESTION',
-  DATA_SOURCES = 'DATA_SOURCES',
-}
+import { View } from './types';
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<View>(View.CHAT);

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View } from '../App';
+import { View } from '../types';
 import { MessageSquare, Share2, Database, Layers, FileText } from 'lucide-react';
 
 interface LayoutProps {
